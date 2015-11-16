@@ -1,0 +1,87 @@
+---
+driver_plugin: vagrant
+
+driver_config:
+  customize:
+    natdnshostresolver1: 'on'
+
+provisioner:
+  name: chef_zero
+  client_rb:
+    no_proxy: <%=ENV['no_proxy'] %>
+    no_lazy_load: true
+
+
+platforms:
+- name: ge-local-users-rhel65
+  driver_config:
+    box: ge-rhel65-x86-64
+    box_url: http://3.166.220.28/virtualbox/ge-rhel65-x86-64.box
+    http_proxy: <%= ENV['http_proxy'] %>
+    https_proxy: <%= ENV['https_proxy'] %>
+- name: win2k8r2
+  provisioner:
+    name: chef_zero
+    require_chef_omnibus: 11.16.4
+    data_path: test/integration/windows/serverspec
+  transport:
+    name: winrm
+  driver_config:
+    box: ge_windows2008r2
+    box_url: http://acusvinolare001.frictionless.capital.ge.com/virtualbox/ge_windows2008r2.box
+    http_proxy: <%= ENV['http_proxy'] %>
+    https_proxy: <%= ENV['https_proxy'] %>
+    network:
+    - [ "forwarded_port", { guest: 5985, host: 5985, id: rdp, auto_correct: true } ]
+    - [ "forwarded_port", { guest: 3389, host: 3389, id: winrm, auto_correct: true } ]
+    gui: true
+    customize:
+      memory: 2048
+      clipboard: bidirectional
+      draganddrop: bidirectional
+- name: win2k12
+  provisioner:
+    name: chef_zero
+    require_chef_omnibus: 11.16.4
+    data_path: test/integration/windows/serverspec
+  transport:
+    name: winrm
+  driver_config:
+    box: ge-win2012-r2-std
+    box_url: http://acusvinolare001.frictionless.capital.ge.com/virtualbox/ge-win2012-r2-std.box
+    http_proxy: <%= ENV['http_proxy'] %>
+    https_proxy: <%= ENV['https_proxy'] %>
+    communicator: winrm
+    network:
+    - [ "forwarded_port", { guest: 5985, host: 5985, id: rdp, auto_correct: true } ]
+    - [ "forwarded_port", { guest: 3389, host: 3389, id: winrm, auto_correct: true } ]
+    gui: true
+    customize:
+      memory: 2048
+      clipboard: bidirectional
+      draganddrop: bidirectional
+
+suites:
+- name: default
+  run_list:
+  - recipe[ge_local_users]
+  attributes: {}
+  excludes:
+    - win2k8r2
+    - win2k12
+- name: windows
+  run_list:
+  - recipe[ge_local_users::_test_ge_local_users]
+  - recipe[ge_local_users]
+  attributes: {}
+  excludes:
+  - ge-local-users-rhel65
+  - win2k12
+- name: windows
+  run_list:
+  - recipe[ge_local_users::_test_ge_local_users]
+  - recipe[ge_local_users]
+  attributes: {}
+  excludes:
+  - ge-local-users-rhel65
+  - win2k8r2
